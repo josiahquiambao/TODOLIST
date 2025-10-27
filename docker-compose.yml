@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: todo_postgres
+    environment:
+      POSTGRES_USER: todo_user
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: todo_db
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  backend:
+    build: ./backend
+    container_name: todo_backend
+    environment:
+      DB_HOST: db
+      DB_USER: todo_user
+      DB_PASSWORD: secret
+      DB_NAME: todo_db
+    depends_on:
+      - db
+    ports:
+      - "3333:3333"
+
+  frontend:
+    build: ./frontend
+    container_name: todo_frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+
+volumes:
+  db_data:
