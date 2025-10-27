@@ -1,0 +1,53 @@
+<div class="dashboard-container">
+  <header>
+    <div class="header-left">
+      <h2>📝 My Tasks</h2>
+      <p class="welcome-text">Welcome, <strong>{{ auth.getUser()?.email }}</strong></p>
+    </div>
+    <button class="logout-btn" (click)="logout()">Logout</button>
+  </header>
+
+  <section class="add-task">
+    <input
+      type="text"
+      placeholder="Task title"
+      [(ngModel)]="newTitle"
+      (keyup.enter)="addTask()"
+    />
+    <input
+      type="text"
+      placeholder="Task description"
+      [(ngModel)]="newDescription"
+      (keyup.enter)="addTask()"
+    />
+    <button (click)="addTask()">＋ Add</button>
+  </section>
+
+  <section class="task-list">
+    <div *ngIf="loading" class="loading">Loading your tasks...</div>
+
+    <ul *ngIf="!loading && tasks.length > 0">
+      <li
+        *ngFor="let task of tasks"
+        [class.completed]="task.isCompleted"
+      >
+        <label class="task-item">
+          <input
+            type="checkbox"
+            [checked]="task.isCompleted"
+            (change)="toggleCompletion(task)"
+          />
+          <span>{{ task.title }}</span>
+          <small *ngIf="task.description">— {{ task.description }}</small>
+        </label>
+        <button class="delete-btn" (click)="deleteTask(task)" title="Delete Task">
+          🗑️
+        </button>
+      </li>
+    </ul>
+
+    <p *ngIf="!loading && tasks.length === 0" class="empty">
+      🎉 You have no tasks yet. Add one above!
+    </p>
+  </section>
+</div>
