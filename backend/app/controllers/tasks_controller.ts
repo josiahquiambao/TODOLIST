@@ -1,23 +1,32 @@
-import { inject } from '@adonisjs/core'
 import type { AuthenticatedContext } from '../types/context.js'
 import AuthController from './auth_controller.js'
 import Task from '#models/task'
 
 export default class TasksController extends AuthController {
+  // Get tasks - Admin sees all, users see only their own
   public async index({ response, user }: AuthenticatedContext) {
-  console.log('Current user ID:', user.id)
-  
-  const tasks = await Task.query()
-    .where('user_id', user.id)
-    .orderBy('created_at', 'desc')
+    console.log('Current user ID:', user.id, 'Role:', user.role)
     
-  console.log('Query results:', tasks)
-  
-  return response.json({
-    status: 'success',
-    data: tasks.map(task => task.serialize())
-  })
-}
+    let tasks
+    if (user.role === 'admin') {
+      // Admin can see all tasks
+      tasks = await Task.query()
+        .preload('user')
+        .orderBy('created_at', 'desc')
+    } else {
+      // Regular users see only their tasks
+      tasks = await Task.query()
+        .where('user_id', user.id)
+        .orderBy('created_at', 'desc')
+    }
+      
+    console.log('Query results:', tasks)
+    
+    return response.json({
+      status: 'success',
+      data: tasks.map(task => task.serialize())
+    })
+  }
 
 
   public async store({ request, response, user }: AuthenticatedContext) {
@@ -47,8 +56,9 @@ export default class TasksController extends AuthController {
 
   public async update({ params, request, response, user }: AuthenticatedContext) {
     const task = await Task.findOrFail(params.id)
-    // Verify task belongs to user
-    if (task.userId !== user.id) {
+    
+    // Verify task belongs to user OR user is admin
+    if (task.userId !== user.id && user.role !== 'admin') {
       return response.unauthorized({ message: 'Not authorized to update this task' })
     }
     
@@ -60,6 +70,12 @@ export default class TasksController extends AuthController {
 
   public async delete({ params, response, user }: AuthenticatedContext) {
     const task = await Task.findOrFail(params.id)
+    
+    // Verify task belongs to user OR user is admin
+    if (task.userId !== user.id && user.role !== 'admin') {
+      return response.unauthorized({ message: 'Not authorized to delete this task' })
+    }
+    
     await task.delete()
     return response.noContent()
   }

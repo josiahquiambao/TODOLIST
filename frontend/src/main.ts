@@ -11,6 +11,7 @@ import { LoginComponent } from './app/pages/login/login';
 import { RegisterComponent } from './app/pages/register/register';
 import { DashboardComponent } from './app/pages/dashboard/dashboard';
 import { AuthInterceptor } from './app/services/auth.interceptor';
+import { authGuard } from './app/guards/auth.guard';
 
 bootstrapApplication(App, {
   providers: [
@@ -19,7 +20,7 @@ bootstrapApplication(App, {
       { path: '', redirectTo: '/login', pathMatch: 'full' },
       { path: 'login', component: LoginComponent },
       { path: 'register', component: RegisterComponent },
-      { path: 'dashboard', component: DashboardComponent }
+      { path: 'dashboard', component: DashboardComponent, canActivate: [authGuard] }
     ]),
     {
       provide: HTTP_INTERCEPTORS,  // <-- correct way to provide interceptors

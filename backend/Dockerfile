@@ -9,10 +9,13 @@ RUN npm install
 # Copy code
 COPY . .
 
+# Copy Docker environment file
+COPY .env.docker .env
+
 # Build AdonisJS
 RUN node ace build
 
 EXPOSE 3333
 
-# Run Adonis server
-CMD ["node", "node ace serve --watch"]
+# Run migrations and start server
+CMD sh -c "node ace migration:run --force && node build/bin/server.js"

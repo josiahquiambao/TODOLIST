@@ -39,6 +39,17 @@ export class AuthService {
   }
 
   getUser() {
-    return JSON.parse(localStorage.getItem('user') || '{}');
+    const userStr = localStorage.getItem('user');
+    return userStr ? JSON.parse(userStr) : null;
+  }
+
+  isAdmin() {
+    const user = this.getUser();
+    return user && user.role === 'admin';
+  }
+
+  getUserRole() {
+    const user = this.getUser();
+    return user?.role || null;
   }
 }

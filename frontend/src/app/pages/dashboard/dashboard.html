@@ -1,53 +1,597 @@
-<div class="dashboard-container">
-  <header>
-    <div class="header-left">
-      <h2>📝 My Tasks</h2>
-      <p class="welcome-text">Welcome, <strong>{{ auth.getUser()?.email }}</strong></p>
+<div class="dashboard">
+  <!-- Header -->
+  <header class="header">
+    <div class="header-container">
+      <div class="header-left">
+        <div class="logo">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+        </div>
+        <div>
+          <h2>TaskFlow</h2>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <!-- User Info -->
+        <div class="user-pill">
+          <div class="user-avatar">
+            <svg *ngIf="auth.isAdmin()" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5" y="11" width="14" height="10" rx="2"></rect>
+              <path d="M12 11V5a2 2 0 0 1 4 0v6"></path>
+              <path d="M12 11V5a2 2 0 0 0-4 0v6"></path>
+            </svg>
+            <svg *ngIf="!auth.isAdmin()" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+          </div>
+          <div class="user-info">
+            <p class="user-name">{{ auth.getUser()?.email }}</p>
+            <p class="user-role">{{ auth.isAdmin() ? 'Administrator' : 'User' }}</p>
+          </div>
+        </div>
+
+        <!-- Logout Button -->
+        <button class="btn-icon logout-btn" (click)="logout()" title="Logout">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+        </button>
+      </div>
     </div>
-    <button class="logout-btn" (click)="logout()">Logout</button>
   </header>
 
-  <section class="add-task">
-    <input
-      type="text"
-      placeholder="Task title"
-      [(ngModel)]="newTitle"
-      (keyup.enter)="addTask()"
-    />
-    <input
-      type="text"
-      placeholder="Task description"
-      [(ngModel)]="newDescription"
-      (keyup.enter)="addTask()"
-    />
-    <button (click)="addTask()">＋ Add</button>
-  </section>
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="container">
+      <!-- Welcome Section -->
+      <div class="welcome-section">
+        <h1>Welcome back, {{ auth.getUser()?.name || auth.getUser()?.email }}!</h1>
+        <p>{{ auth.isAdmin() ? 'You have full access to manage all tasks and users.' : 'Here are your tasks for today.' }}</p>
+      </div>
 
-  <section class="task-list">
-    <div *ngIf="loading" class="loading">Loading your tasks...</div>
+      <!-- Stats Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-content">
+            <div>
+              <p class="stat-label">Total Tasks</p>
+              <p class="stat-value">{{ tasks.length }}</p>
+            </div>
+            <div class="stat-icon indigo">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+            </div>
+          </div>
+        </div>
 
-    <ul *ngIf="!loading && tasks.length > 0">
-      <li
-        *ngFor="let task of tasks"
-        [class.completed]="task.isCompleted"
-      >
-        <label class="task-item">
-          <input
-            type="checkbox"
-            [checked]="task.isCompleted"
-            (change)="toggleCompletion(task)"
-          />
-          <span>{{ task.title }}</span>
-          <small *ngIf="task.description">— {{ task.description }}</small>
-        </label>
-        <button class="delete-btn" (click)="deleteTask(task)" title="Delete Task">
-          🗑️
-        </button>
-      </li>
-    </ul>
+        <div class="stat-card">
+          <div class="stat-content">
+            <div>
+              <p class="stat-label">Completed</p>
+              <p class="stat-value">{{ getCompletedCount() }}</p>
+            </div>
+            <div class="stat-icon green">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+            </div>
+          </div>
+        </div>
 
-    <p *ngIf="!loading && tasks.length === 0" class="empty">
-      🎉 You have no tasks yet. Add one above!
-    </p>
-  </section>
+        <div class="stat-card">
+          <div class="stat-content">
+            <div>
+              <p class="stat-label">Pending</p>
+              <p class="stat-value">{{ getPendingCount() }}</p>
+            </div>
+            <div class="stat-icon amber">
+              <div class="pending-icon"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions Bar -->
+      <div class="actions-bar">
+        <div class="filters">
+          <!-- User Filter (Admin Only) -->
+          <div *ngIf="auth.isAdmin()" class="user-filter">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            <select [(ngModel)]="selectedUserId" (change)="setUserFilter(selectedUserId)" class="user-select">
+              <option [value]="'all'">All Users</option>
+              <option *ngFor="let user of users" [value]="user.id">{{ user.fullName || user.email }}</option>
+            </select>
+          </div>
+          
+          <!-- Status Filter Tabs -->
+          <div class="filter-tabs">
+            <button 
+              class="filter-tab" 
+              [class.active]="statusFilter === 'all'"
+              (click)="setFilter('all')">
+              All
+            </button>
+            <button 
+              class="filter-tab"
+              [class.active]="statusFilter === 'pending'"
+              (click)="setFilter('pending')">
+              Pending
+            </button>
+            <button 
+              class="filter-tab"
+              [class.active]="statusFilter === 'completed'"
+              (click)="setFilter('completed')">
+              Completed
+            </button>
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button *ngIf="auth.isAdmin()" class="btn-secondary" (click)="toggleUserManagement()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <line x1="19" y1="8" x2="19" y2="14"></line>
+              <line x1="22" y1="11" x2="16" y2="11"></line>
+            </svg>
+            <span class="btn-text">Users</span>
+          </button>
+          <button class="btn-primary" (click)="openNewTaskModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            New Task
+          </button>
+        </div>
+      </div>
+
+      <!-- User Management Modal -->
+      <div *ngIf="auth.isAdmin() && showUserManagement" class="user-management-modal">
+        <div class="modal-overlay" (click)="toggleUserManagement()"></div>
+        <div class="modal-content user-modal">
+          <div class="modal-header">
+            <h2>User Management</h2>
+            <button class="close-btn" (click)="toggleUserManagement()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          
+          <div class="modal-body">
+            <!-- Create User Button -->
+            <button class="btn-primary full-width mb-4" (click)="openCreateUserModal()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <line x1="19" y1="8" x2="19" y2="14"></line>
+                <line x1="22" y1="11" x2="16" y2="11"></line>
+              </svg>
+              Create New User
+            </button>
+
+            <!-- Users List -->
+            <div class="users-list-section">
+              <h3>All Users ({{ users.length }})</h3>
+              <div class="users-list">
+                <div *ngFor="let user of users" class="user-item">
+                  <div class="user-item-left">
+                    <div class="user-item-avatar" [class.admin]="user.role === 'admin'">
+                      <svg *ngIf="user.role === 'admin'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="5" y="11" width="14" height="10" rx="2"></rect>
+                        <path d="M12 11V5a2 2 0 0 1 4 0v6"></path>
+                        <path d="M12 11V5a2 2 0 0 0-4 0v6"></path>
+                      </svg>
+                      <svg *ngIf="user.role !== 'admin'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                      </svg>
+                    </div>
+                    <div>
+                      <p class="user-item-name">{{ user.fullName || user.email }}</p>
+                      <p class="user-item-email">{{ user.email }}</p>
+                    </div>
+                  </div>
+                  <span class="role-badge" [class.admin]="user.role === 'admin'">
+                    {{ user.role === 'admin' ? 'Administrator' : 'Regular User' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Create User Modal -->
+      <div *ngIf="showCreateUserModal" class="user-management-modal">
+        <div class="modal-overlay" (click)="closeCreateUserModal()"></div>
+        <div class="modal-content task-modal">
+          <div class="modal-header">
+            <h2>Create New User</h2>
+            <button class="close-btn" (click)="closeCreateUserModal()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          
+          <div class="modal-body">
+            <div class="form-group">
+              <label>Full Name</label>
+              <input 
+                type="text" 
+                placeholder="Enter full name" 
+                [(ngModel)]="newUserFullName" 
+                class="form-input"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Email <span class="required">*</span></label>
+              <input 
+                type="email" 
+                placeholder="Enter email address" 
+                [(ngModel)]="newUserEmail" 
+                class="form-input"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Password <span class="required">*</span></label>
+              <input 
+                type="password" 
+                placeholder="Enter password" 
+                [(ngModel)]="newUserPassword" 
+                class="form-input"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Role</label>
+              <div class="status-selector">
+                <button 
+                  type="button" 
+                  class="status-btn pending" 
+                  [class.active]="newUserRole === 'user'"
+                  (click)="newUserRole = 'user'">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                  Regular User
+                </button>
+                <button 
+                  type="button" 
+                  class="status-btn completed" 
+                  [class.active]="newUserRole === 'admin'"
+                  (click)="newUserRole = 'admin'">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="5" y="11" width="14" height="10" rx="2"></rect>
+                    <path d="M12 11V5a2 2 0 0 1 4 0v6"></path>
+                    <path d="M12 11V5a2 2 0 0 0-4 0v6"></path>
+                  </svg>
+                  Administrator
+                </button>
+              </div>
+            </div>
+
+            <div class="modal-actions">
+              <button class="btn-secondary" (click)="closeCreateUserModal()">Cancel</button>
+              <button class="btn-primary" (click)="addUser()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <line x1="19" y1="8" x2="19" y2="14"></line>
+                  <line x1="22" y1="11" x2="16" y2="11"></line>
+                </svg>
+                Create User
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- New Task Modal -->
+      <div *ngIf="showNewTaskModal" class="user-management-modal">
+        <div class="modal-overlay" (click)="closeNewTaskModal()"></div>
+        <div class="modal-content task-modal">
+          <div class="modal-header">
+            <h2>Create New Task</h2>
+            <button class="close-btn" (click)="closeNewTaskModal()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          
+          <div class="modal-body">
+            <div class="form-group">
+              <label>Title <span class="required">*</span></label>
+              <input 
+                type="text" 
+                placeholder="Enter task title" 
+                [(ngModel)]="newTitle" 
+                class="form-input"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Description</label>
+              <textarea 
+                placeholder="Add more details about this task (optional)" 
+                [(ngModel)]="newDescription" 
+                class="form-textarea"
+                rows="4"
+              ></textarea>
+            </div>
+
+            <div class="form-group">
+              <label>Status</label>
+              <div class="status-selector">
+                <button 
+                  type="button" 
+                  class="status-btn pending" 
+                  [class.active]="!newTaskStatus"
+                  (click)="newTaskStatus = false">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                  </svg>
+                  Pending
+                </button>
+                <button 
+                  type="button" 
+                  class="status-btn completed" 
+                  [class.active]="newTaskStatus"
+                  (click)="newTaskStatus = true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                  </svg>
+                  Completed
+                </button>
+              </div>
+            </div>
+
+            <div class="modal-actions">
+              <button class="btn-secondary" (click)="closeNewTaskModal()">Cancel</button>
+              <button class="btn-primary" (click)="addTask()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                Create Task
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit Task Modal -->
+      <div *ngIf="showEditTaskModal" class="user-management-modal">
+        <div class="modal-overlay" (click)="closeEditTaskModal()"></div>
+        <div class="modal-content task-modal">
+          <div class="modal-header">
+            <h2>Edit Task</h2>
+            <button class="close-btn" (click)="closeEditTaskModal()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+          
+          <div class="modal-body">
+            <div class="form-group">
+              <label>Title <span class="required">*</span></label>
+              <input 
+                type="text" 
+                placeholder="Enter task title" 
+                [(ngModel)]="newTitle" 
+                class="form-input"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Description</label>
+              <textarea 
+                placeholder="Add more details about this task (optional)" 
+                [(ngModel)]="newDescription" 
+                class="form-textarea"
+                rows="4"
+              ></textarea>
+            </div>
+
+            <div class="form-group">
+              <label>Status</label>
+              <div class="status-selector">
+                <button 
+                  type="button" 
+                  class="status-btn pending" 
+                  [class.active]="!newTaskStatus"
+                  (click)="newTaskStatus = false">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                  </svg>
+                  Pending
+                </button>
+                <button 
+                  type="button" 
+                  class="status-btn completed" 
+                  [class.active]="newTaskStatus"
+                  (click)="newTaskStatus = true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                  </svg>
+                  Completed
+                </button>
+              </div>
+            </div>
+
+            <div class="modal-actions">
+              <button class="btn-secondary" (click)="closeEditTaskModal()">Cancel</button>
+              <button class="btn-primary" (click)="updateTask()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+                Update Task
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tasks Grid -->
+      <div *ngIf="!loading && getFilteredTasks().length > 0" class="tasks-grid">
+        <div *ngFor="let task of getFilteredTasks()" class="task-card" [class.completed]="task.isCompleted">
+          <div class="task-header">
+            <button class="task-checkbox" (click)="toggleCompletion(task)">
+              <svg *ngIf="task.isCompleted" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              <svg *ngIf="!task.isCompleted" class="circle-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+              </svg>
+            </button>
+
+            <div class="task-actions">
+              <button class="task-action-btn edit" (click)="openEditTaskModal(task)" title="Edit">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              </button>
+              <button class="task-action-btn delete" (click)="deleteTask(task)" title="Delete">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="task-content">
+            <h3 class="task-title">{{ task.title }}</h3>
+            <p *ngIf="task.description" class="task-description">{{ task.description }}</p>
+          </div>
+
+          <div class="task-footer">
+            <div class="task-footer-left">
+              <div class="task-date">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                <span>{{ task.createdAt | date: 'MMM d, y' }}</span>
+              </div>
+              
+              <div *ngIf="auth.isAdmin() && task.user" class="task-assignee">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <span>{{ task.user?.fullName || task.user?.email || getUserName(task.userId) }}</span>
+              </div>
+            </div>
+
+            <span class="task-status-badge" [class.completed]="task.isCompleted">
+              {{ task.isCompleted ? 'Completed' : 'Pending' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!loading && getFilteredTasks().length === 0" class="empty-state">
+        <div class="empty-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+        </div>
+        <h3>No tasks found</h3>
+        <p>{{ statusFilter === 'all' ? 'Create your first task to get started!' : 'No ' + statusFilter + ' tasks' }}</p>
+      </div>
+
+      <!-- Loading State -->
+      <div *ngIf="loading" class="loading-state">
+        <div class="spinner-large"></div>
+        <p>Loading your tasks...</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Custom Alert/Confirmation Modal -->
+  <div *ngIf="currentAlert" class="custom-alert-overlay" (click)="handleAlertCancel()">
+    <div class="custom-alert-modal" (click)="$event.stopPropagation()">
+      <div class="custom-alert-content">
+        <div class="custom-alert-icon" [ngClass]="currentAlert.type">
+          <!-- Success Icon -->
+          <svg *ngIf="currentAlert.type === 'success'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+          
+          <!-- Error Icon -->
+          <svg *ngIf="currentAlert.type === 'error'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="15" y1="9" x2="9" y2="15"></line>
+            <line x1="9" y1="9" x2="15" y2="15"></line>
+          </svg>
+          
+          <!-- Warning Icon -->
+          <svg *ngIf="currentAlert.type === 'warning'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          
+          <!-- Confirm Icon -->
+          <svg *ngIf="currentAlert.type === 'confirm'" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+        </div>
+        
+        <h3 class="custom-alert-title">{{ currentAlert.title }}</h3>
+        <p class="custom-alert-message">{{ currentAlert.message }}</p>
+        
+        <div class="custom-alert-actions" [ngClass]="{ 'single': currentAlert.type !== 'confirm' }">
+          <button 
+            *ngIf="currentAlert.type === 'confirm'" 
+            class="alert-btn alert-btn-secondary" 
+            (click)="handleAlertCancel()">
+            {{ currentAlert.cancelText || 'Cancel' }}
+          </button>
+          <button 
+            class="alert-btn" 
+            [ngClass]="currentAlert.type === 'confirm' ? 'alert-btn-danger' : 'alert-btn-primary'"
+            (click)="handleAlertConfirm()">
+            {{ currentAlert.confirmText || 'OK' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

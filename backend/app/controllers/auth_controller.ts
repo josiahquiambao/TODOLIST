@@ -7,15 +7,21 @@ const JWT_SECRET = process.env.JWT_SECRET || 'default_secret_key'
 
 export default class AuthController {
   public async register({ request, response }: HttpContext) {
-    const { email, password } = request.only(['email', 'password'])
+    const { email, password, fullName, role } = request.only(['email', 'password', 'fullName', 'role'])
     
     const existingUser = await User.findBy('email', email)
     if (existingUser) {
       return response.conflict({ message: 'Email already in use' })
     }
 
-    const user = await User.create({ email, password })
-    const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '24h' })
+    // Only allow role if it's explicitly set, otherwise default to 'user'
+    const user = await User.create({ 
+      email, 
+      password, 
+      fullName,
+      role: role === 'admin' ? 'admin' : 'user'
+    })
+    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '24h' })
 
     return response.created({
       user: user.serialize(),
@@ -31,7 +37,7 @@ export default class AuthController {
       return response.unauthorized({ message: 'Invalid credentials' })
     }
 
-    const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '24h' })
+    const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '24h' })
     return response.ok({
       user: user.serialize(),
       token

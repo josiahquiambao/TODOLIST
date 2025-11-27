@@ -3,8 +3,8 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from './auth';
 
 @Injectable({ providedIn: 'root' })
-export class TaskService {
-  private apiUrl = 'http://localhost:3333/api/tasks'; // Added /api prefix
+export class UserService {
+  private apiUrl = 'http://localhost:3333/api/users';
 
   constructor(private http: HttpClient, private auth: AuthService) {}
 
@@ -15,19 +15,23 @@ export class TaskService {
     });
   }
 
-  getTasks() {
+  getUsers() {
     return this.http.get(this.apiUrl, { headers: this.getHeaders() });
   }
 
-  createTask(task: { title: string; description: string; isCompleted?: boolean }) {
-    return this.http.post(this.apiUrl, task, { headers: this.getHeaders() });
+  createUser(user: { email: string; password: string; fullName?: string; role: string }) {
+    return this.http.post(this.apiUrl, user, { headers: this.getHeaders() });
   }
 
-  updateTask(id: number, task: { title?: string; description?: string; isCompleted?: boolean }) {
-    return this.http.put(`${this.apiUrl}/${id}`, task, { headers: this.getHeaders() });
+  getUser(id: number) {
+    return this.http.get(`${this.apiUrl}/${id}`, { headers: this.getHeaders() });
   }
 
-  deleteTask(id: number) {
+  updateUser(id: number, user: any) {
+    return this.http.put(`${this.apiUrl}/${id}`, user, { headers: this.getHeaders() });
+  }
+
+  deleteUser(id: number) {
     return this.http.delete(`${this.apiUrl}/${id}`, { headers: this.getHeaders() });
   }
 }
