@@ -17,5 +17,5 @@ RUN node ace build
 
 EXPOSE 3333
 
-# Run migrations and start server
-CMD sh -c "node ace migration:run --force && node build/bin/server.js"
+# Run AdonisJS in development mode
+CMD ["node", "ace", "serve", "--watch"]
